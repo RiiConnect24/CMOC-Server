@@ -276,6 +276,48 @@ class QuickList(): #returns a temporary unencrypted mii list for CGI scripts lik
 
 		return data #returns the formatted data, ready to be compressed and encrypted for CMOC
 
+	def infoBuild(self, craftsno, entryno, miidata, initial, master, popularity, ranking): #must be sent craftsno, entryno, most popular mii, initials, master artisan flag, popularity and ranking
+
+		self.header = bytes.fromhex('494E000000000000') + u32(int(craftsno)) + bytes.fromhex('000000000000000000000000FFFFFFFFFFFFFFFF')
+		miidata = b64decode(miidata)
+		if len(initial) == 1:
+			initial = initial.encode() + b'\x00' #add 0x00 to 1 letter initials
+		else:
+			initial = initial.encode()
+
+		self.mii = {}
+		self.mii['header'] = self.header
+		self.mii['im_tag'] = b'IM'
+		self.mii['im_size'] = u16(96)
+		self.mii['unk1'] = u32(1)
+		self.mii['entry_number'] = u32(int(entryno))
+		self.mii['mii'] = miidata
+		self.mii['unk2'] = u16(1)
+		self.mii['unk3'] = u32(0)
+		self.mii['initials'] = initial
+		self.mii['in_tag'] = b'IN'
+		self.mii['in_size'] = u16(24)
+		self.mii['unk4'] = u32(1)
+		self.mii['unk5'] = u32(1)
+		self.mii['unk6'] = u32(1)
+		self.mii['master'] = u16(int(master))
+		self.mii['popularity'] = u8(int(popularity))
+		self.mii['unk7'] = u8(0)
+
+		if int(ranking) == 0:
+			self.mii['ranking'] = u8(0)
+		else:
+			self.mii['ranking'] = u8(int(ranking)+1)
+
+		self.mii['unk8'] = u16(0)
+		self.mii['unk9'] = u8(1)
+		self.miilist += self.mii.values()
+
+		data = b''
+		for entry in self.miilist:
+			data += entry
+
+		return data #returns the formatted data, ready to be compressed and encrypted for CMOC
 
 	def popcraftsBuild(self, artisans): #same as above but formatted for popcrafts_list
 		#artisans must be 2 dimensional array containing craftsno, artisandata, master artisan flag, and popularity

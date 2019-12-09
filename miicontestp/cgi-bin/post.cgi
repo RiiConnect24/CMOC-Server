@@ -7,6 +7,7 @@ from struct import pack
 from cmoc import AddMii, ResetList
 from os import stat
 from json import load
+from datadog import statsd
 
 with open("/var/rc24/File-Maker/Tools/CMOC/config.json", "r") as f:
         config = load(f)
@@ -49,6 +50,7 @@ if int(cursor.fetchone()[0]) == int(wiino): #prevents uploading if its wii numbe
 		cursor.execute("SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'cmoc' AND TABLE_NAME = 'mii'") #get next entryno in list
 		result = int(cursor.fetchone()[0]) - 1 #gives the user this mii's index, rather than the one ahead of it
 		cursor.execute("UPDATE artisan SET postcount = postcount+1 WHERE craftsno = %s", [craftsno])
+		statsd.increment("cmoc.posts")
 
 	data = bytes.fromhex('505300000000000000000000000000000000000000000000FFFFFFFFFFFFFFFF454E000C00000001') + u32(result) #responds with the mii's entry number
 	stdout.buffer.write(b"Content-Type:application/octet-stream\n\n")

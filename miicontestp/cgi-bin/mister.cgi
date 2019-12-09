@@ -5,6 +5,7 @@ from struct import pack
 from base64 import b64encode
 import MySQLdb
 from json import load
+from datadog import statsd
 
 with open("/var/rc24/File-Maker/Tools/CMOC/config.json", "r") as f:
         config = load(f)
@@ -38,6 +39,7 @@ else:
 	VALUES(%s, 0, 13, 0, 0, %s, %s, %s, %s)", (nickname, country, cngroup, wiino, miidata)) 
 	cursor.execute("SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'cmoc' AND TABLE_NAME = 'artisan'") #get next craftsno in list
 	result = int(cursor.fetchone()[0]) -1 #gives the user a new index BUT REMOVE ONE OR ELSE!!!!! YOU MUST!!!!!!!!!!!
+	statsd.increment("cmoc.registers")
 
 data = bytes.fromhex('4D5300000000000000000000000000000000000000000000FFFFFFFFFFFFFFFF454E000C00000001') + u32(int(result)) #tells CMOC its craftsno
 
