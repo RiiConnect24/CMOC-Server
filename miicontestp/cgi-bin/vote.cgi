@@ -20,7 +20,7 @@ cursor.execute('UPDATE artisan SET popularity=(SELECT AVG(permlikes) FROM mii WH
 
 cursor.execute('SELECT votes FROM artisan WHERE craftsno = %s', [craftsno])
 
-if int(cursor.fetchone()[0]) >= 250: #250 likes needed to become a master artisan
+if int(cursor.fetchone()[0]) >= 1000: #1000 likes needed to become a master artisan
 	cursor.execute('UPDATE artisan SET master = 1 WHERE craftsno  = %s', [craftsno])
 
 data = bytes.fromhex('565400000000000000000000000000000000000000000000ffffffffffffffff454e002000000001000000010000000100000001000000010000000100000001')
