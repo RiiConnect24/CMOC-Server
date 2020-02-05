@@ -5,6 +5,8 @@ from struct import pack
 import MySQLdb
 from json import load
 from cmoc import QuickList
+import sentry_sdk
+sentry_sdk.init("https://d3e72292cdba41b8ac005d6ca9f607b1@sentry.io/1860434")
 
 with open("/var/rc24/File-Maker/Tools/CMOC/config.json", "r") as f:
 		config = load(f)
@@ -32,6 +34,13 @@ craftsno = int(form['craftsno'].value) #receives GET parameter craftsno to inser
 
 cursor.execute('SELECT master,popularity FROM artisan WHERE craftsno = %s', [craftsno])
 response = cursor.fetchone()
+
+if response == None:
+	stdout.flush()
+	stdout.buffer.write(b'Status: 403 Forbidden\n\n')
+	stdout.flush()
+	exit()
+
 master = response[0]
 popularity = response[1]
 
