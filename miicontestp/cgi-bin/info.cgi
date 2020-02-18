@@ -1,12 +1,13 @@
-#!/usr/local/bin/python3.7
+#!/usr/bin/env python
+import sentry_sdk
+sentry_sdk.init("https://d3e72292cdba41b8ac005d6ca9f607b1@sentry.io/1860434")
+
 from sys import stdout
 from cgi import FieldStorage
 from struct import pack
 import MySQLdb
 from json import load
 from cmoc import QuickList
-import sentry_sdk
-sentry_sdk.init("https://d3e72292cdba41b8ac005d6ca9f607b1@sentry.io/1860434")
 
 with open("/var/rc24/File-Maker/Tools/CMOC/config.json", "r") as f:
 		config = load(f)
@@ -35,16 +36,16 @@ craftsno = int(form['craftsno'].value) #receives GET parameter craftsno to inser
 cursor.execute('SELECT master,popularity FROM artisan WHERE craftsno = %s', [craftsno])
 response = cursor.fetchone()
 
-if response == None:
+if response == None: #sends user save file corrupted message
+	stdout.buffer.write(b"Content-Type:application/octet-stream\n\n")
 	stdout.flush()
-	stdout.buffer.write(b'Status: 403 Forbidden\n\n')
-	stdout.flush()
+	stdout.buffer.write(bytes.fromhex('494E000000000000') + u32(int(craftsno)) + bytes.fromhex('000000000000000000000000FFFFFFFF00000000'))
 	exit()
 
 master = response[0]
 popularity = response[1]
 
-cursor.execute('SELECT craftsno FROM artisan ORDER BY votes DESC LIMIT 100')
+cursor.execute('SELECT craftsno FROM artisan WHERE craftsno !=100000993 ORDER BY votes DESC LIMIT 100')
 craftlist = cursor.fetchall()
 
 for n in range(len(craftlist)): #this sucks but idk how to do it in SQL
@@ -59,7 +60,7 @@ response = cursor.fetchone()
 
 if response == None: #displays the default mii if the user has 0 posts
 	entryno = 1
-	miidata = 'gAAAPwAAAAAAAAAAAAAAAAAAAAAAAEBAhjl7y8ImXCgABEJAMb0oogiMCEAUSbiNAIoAiiUEAAAAAAAAAAAAAAAAAAAAAAAAAADqKQ=='
+	miidata = 'XYAAAD8AAQD9EUBAhjl7y8ImXCgABEJAMb0oogiMCEAUSbiNAIoAiiUEMQBQAAAA6ik='
 	initial = '00'
 	
 else:

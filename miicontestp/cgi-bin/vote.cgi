@@ -1,11 +1,12 @@
-#!/usr/local/bin/python3.7
+#!/usr/bin/env python
+import sentry_sdk
+sentry_sdk.init("https://d3e72292cdba41b8ac005d6ca9f607b1@sentry.io/1860434")
+
 from sys import stdout
 from cgi import FieldStorage,escape
 import MySQLdb
 from json import load
 from os import environ
-import sentry_sdk
-sentry_sdk.init("https://d3e72292cdba41b8ac005d6ca9f607b1@sentry.io/1860434")
 
 with open("/var/rc24/File-Maker/Tools/CMOC/config.json", "r") as f:
         config = load(f)
@@ -67,15 +68,11 @@ if cursor.fetchone()[0] == 0: #this mac address has not voted on this mii before
 	stdout.flush()
 	db.commit()
 	db.close()
-	with open("/var/rc24/File-Maker/Channels/Check_Mii_Out_Channel/logs/vote.log", 'a') as file:
-		file.write('\n[VOTE] IP: ' + ip + ' MAC: ' + str(macadr) + ' ENTRYNO: ' + str(entryno) + ' CRAFTSNO: ' + str(craftsno) + '')
 
 else: #duplicate vote, piss off
 	stdout.buffer.write(b"Content-Type:application/octet-stream\n\n")
 	stdout.flush()
 	stdout.buffer.write(bytes.fromhex('565400000000000000000000000000000000000000000000ffffffffffffffff454e002000000001000000010000000100000001000000010000000100000001'))
 	stdout.flush()
-	with open("/var/rc24/File-Maker/Channels/Check_Mii_Out_Channel/logs/vote.log", 'a') as file:
-		file.write('\n[FAIL] IP: ' + ip + ' MAC: ' + str(macadr) + ' ENTRYNO: ' + str(entryno) + ' CRAFTSNO: ' + str(craftsno) + '')
 
 	exit()

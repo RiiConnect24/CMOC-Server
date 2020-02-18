@@ -1,11 +1,12 @@
-#!/usr/local/bin/python3.7
+#!/usr/bin/env python
+import sentry_sdk
+sentry_sdk.init("https://d3e72292cdba41b8ac005d6ca9f607b1@sentry.io/1860434")
+
 from sys import stdout
 from cgi import FieldStorage
 import MySQLdb
 from struct import pack
 from json import load
-import sentry_sdk
-sentry_sdk.init("https://d3e72292cdba41b8ac005d6ca9f607b1@sentry.io/1860434")
 
 def u32(data):
     if not 0 <= data <= 4294967295:
