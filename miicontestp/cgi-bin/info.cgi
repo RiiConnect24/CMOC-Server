@@ -1,16 +1,16 @@
 #!/usr/bin/env python
-import sentry_sdk
-sentry_sdk.init("https://d3e72292cdba41b8ac005d6ca9f607b1@sentry.io/1860434")
-
 from sys import stdout
 from cgi import FieldStorage
 from struct import pack
 import MySQLdb
 from json import load
 from cmoc import QuickList
+import sentry_sdk
 
-with open("/var/rc24/File-Maker/Tools/CMOC/config.json", "r") as f:
+with open("/var/rc24/File-Maker/Channels/Check_Mii_Out_Channel/config.json", "r") as f:
 		config = load(f)
+
+sentry_sdk.init(config["sentry_url"])
 
 def u8(data):
 	if not 0 <= data <= 255:

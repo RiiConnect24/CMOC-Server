@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-import sentry_sdk
-sentry_sdk.init("https://d3e72292cdba41b8ac005d6ca9f607b1@sentry.io/1860434")
-
 from sys import stdout
 from cgi import FieldStorage
 from base64 import b64encode
@@ -12,9 +9,12 @@ from json import load
 from datadog import statsd
 from crc16 import crc16xmodem
 from subprocess import check_output
+import sentry_sdk
 
-with open("/var/rc24/File-Maker/Tools/CMOC/config.json", "r") as f:
+with open("/var/rc24/File-Maker/Channels/Check_Mii_Out_Channel/config.json", "r") as f:
         config = load(f)
+
+sentry_sdk.init(config["sentry_url"])
 
 def u32(data):
     if not 0 <= data <= 4294967295:
@@ -35,7 +35,7 @@ def checkWiino(wiino):
 	if len(wiino) > 16:
 		return False
 	else:
-		checkResult = check_output("./wiino check {}".format(wiino), shell=True, universal_newlines=True)
+		checkResult = check_output("wiino check {}".format(wiino), shell=True, universal_newlines=True)
 		if int(checkResult) == 0: return True
 		else: return False
 

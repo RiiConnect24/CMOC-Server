@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-import sentry_sdk
-sentry_sdk.init("https://d3e72292cdba41b8ac005d6ca9f607b1@sentry.io/1860434")
-
 from sys import stdout
 from cgi import FieldStorage
 from html import escape
@@ -12,10 +9,13 @@ from json import load
 import lz4.block
 from crc16 import crc16xmodem
 from subprocess import check_output
+import sentry_sdk
 
 with open("/var/rc24/File-Maker/Channels/Check_Mii_Out_Channel/config.json", "r") as f:
         config = load(f)
-        
+
+sentry_sdk.init(config["sentry_url"])
+
 def result(id):
 	stdout.flush()
 	stdout.buffer.write(b'X-RESULT: ' + str(id).encode() + b'\n\n')
@@ -30,7 +30,7 @@ def checkWiino(wiino):
 	if len(wiino) > 16:
 		return False
 	else:
-		checkResult = check_output("./wiino check {}".format(wiino), shell=True, universal_newlines=True)
+		checkResult = check_output("wiino check {}".format(wiino), shell=True, universal_newlines=True)
 		if int(checkResult) == 0: return True
 		else: return False
 
@@ -109,13 +109,18 @@ else: #this user is updating their entry
 	cursor.execute('SELECT ip FROM conmiis WHERE mac = %s AND contest = %s', (macadr, contestno))
 	storedIP = cursor.fetchone()
 	if storedIP != None:
-		if storedIP[0] != ip:
-			result(610) #current IP address is different from the one the mii was initially uploaded with
+		if storedIP[0] == 'None': #allows admins to reset a mii's IP
+			pass
+
+		elif storedIP[0] != ip:
+			pass
+                        # result(610) #current IP address is different from the one the mii was initially uploaded with
 
 	else:
-		result(610)
+		pass
+                # result(610)
 
-	cursor.execute('UPDATE conmiis SET miidata = %s WHERE craftsno = %s AND mac = %s AND contest = %s', (miidata, craftsno, macadr, contestno))
+	cursor.execute('UPDATE conmiis SET miidata = %s, ip = %s WHERE craftsno = %s AND mac = %s AND contest = %s', (miidata, ip, craftsno, macadr, contestno))
 
 data = bytes.fromhex('435000000000000000000000000000000000000000000000FFFFFFFFFFFFFFFF4E4C001000000001FFFFFFFFFFFFFFFF')
 stdout.buffer.write(b"Content-Type:application/octet-stream\n\n")

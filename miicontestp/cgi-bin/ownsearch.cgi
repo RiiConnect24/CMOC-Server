@@ -1,15 +1,15 @@
 #!/usr/bin/env python
-import sentry_sdk
-sentry_sdk.init("https://d3e72292cdba41b8ac005d6ca9f607b1@sentry.io/1860434")
-
 import MySQLdb
 from cmoc import OwnSearch
 from sys import stdout
 from cgi import FieldStorage
 from json import load
+import sentry_sdk
 
-with open("/var/rc24/File-Maker/Tools/CMOC/config.json", "r") as f:
+with open("/var/rc24/File-Maker/Channels/Check_Mii_Out_Channel/config.json", "r") as f:
         config = load(f)
+
+sentry_sdk.init(config["sentry_url"])
 
 form = FieldStorage()
 OwnSearch = OwnSearch()

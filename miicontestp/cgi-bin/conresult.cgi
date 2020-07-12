@@ -1,16 +1,16 @@
 #!/usr/bin/env python
-import sentry_sdk
-sentry_sdk.init("https://d3e72292cdba41b8ac005d6ca9f607b1@sentry.io/1860434")
-
 from cgi import FieldStorage
 from sys import stdout
 from cmoc import ConResult
 import MySQLdb
 from json import load
 from sys import stdout
+import sentry_sdk
 
 with open("/var/rc24/File-Maker/Channels/Check_Mii_Out_Channel/config.json", "r") as f:
         config = load(f)
+
+sentry_sdk.init(config["sentry_url"])
 
 def result(id):
 	stdout.flush()
@@ -18,7 +18,7 @@ def result(id):
 	stdout.flush()
 	exit()
 
-db = MySQLdb.connect('sponge.press', config['dbuser'], config['dbpass'], 'cmoc', charset='utf8mb4')
+db = MySQLdb.connect('localhost', config['dbuser'], config['dbpass'], 'cmoc', charset='utf8mb4')
 cursor = db.cursor()
 cr = ConResult()
 form = FieldStorage()

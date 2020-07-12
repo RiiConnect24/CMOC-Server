@@ -1,20 +1,20 @@
 #!/usr/bin/env python
-import sentry_sdk
-sentry_sdk.init("https://d3e72292cdba41b8ac005d6ca9f607b1@sentry.io/1860434")
-
 from sys import stdout
 from cgi import FieldStorage
 from struct import pack
-from base64 import b64encode
+from base64 import b64encode, b64decode
 import lz4.block
 import MySQLdb
 from json import load
 from datadog import statsd
 from crc16 import crc16xmodem
 from subprocess import check_output
+import sentry_sdk
 
-with open("/var/rc24/File-Maker/Tools/CMOC/config.json", "r") as f:
+with open("/var/rc24/File-Maker/Channels/Check_Mii_Out_Channel/config.json", "r") as f:
         config = load(f)
+
+sentry_sdk.init(config["sentry_url"])
 
 def u32(data):
     if not 0 <= data <= 4294967295:
@@ -35,7 +35,7 @@ def checkWiino(wiino):
 	if len(wiino) > 16:
 		return False
 	else:
-		checkResult = check_output("./wiino check {}".format(wiino), shell=True, universal_newlines=True)
+		checkResult = check_output("wiino check {}".format(wiino), shell=True, universal_newlines=True)
 		if int(checkResult) == 0: return True
 		else: return False
 
@@ -47,6 +47,15 @@ def result(id):
 	stdout.buffer.write(b'X-RESULT: ' + str(id).encode() + b'\n\n')
 	stdout.flush()
 	exit()
+
+def naughtyWord(word): #uppercase bad word list is stored in the config file in base64
+	badwords = b64decode(config['badwords']).decode().split('\n')
+	for i in word.upper().replace(' ', '_').split('_'):
+		if i in badwords:
+			return True
+			break
+
+	return False
 
 form = FieldStorage(errors = 'surrogateescape') #surrogateescape is used to get binary data in forms that are mixed with string data
 
@@ -64,6 +73,7 @@ if len(miidata) != 76: result(305)
 if len(nickname) > 10 or len(nickname) < 1:	result(304)
 if verifyMac(macadr) == False:	result(303)
 if checkWiino(wiino) == False:	result(310)
+if naughtyWord(nickname):	result(307)
 
 crc1 = int.from_bytes(miidata[-2:], "big") #crc16 that CMOC sends to the server
 crc2 = crc16xmodem(miidata[:-2]) #recalculated crc16 that the server confirms

@@ -1,17 +1,17 @@
 #!/usr/bin/env python
-import sentry_sdk
-sentry_sdk.init("https://d3e72292cdba41b8ac005d6ca9f607b1@sentry.io/1860434")
-
 import MySQLdb
 from cmoc import Search
 from sys import stdout
 from cgi import FieldStorage
 from json import load
 import struct
+import sentry_sdk
 
-with open("/var/rc24/File-Maker/Tools/CMOC/config.json", "r") as f:
+with open("/var/rc24/File-Maker/Channels/Check_Mii_Out_Channel/config.json", "r") as f:
         config = load(f)
-        
+
+sentry_sdk.init(config["sentry_url"])
+
 def u32(data):
 	if not 0 <= data <= 4294967295:
 		log("u32 out of range: %s" % data, "INFO")
@@ -43,7 +43,6 @@ cursor.execute('SELECT craftsno,entryno FROM mii WHERE nickname LIKE %s', [('%' 
 numbers = cursor.fetchall()
 
 miilist = []
-
 for i in range(len(numbers)): #add the artisan data to each mii based on their craftsno
 	cursor.execute('SELECT entryno,initial,permlikes,skill,country,miidata FROM mii WHERE craftsno = %s AND entryno = %s', (numbers[i][0], numbers[i][1]))
 	mii = cursor.fetchone()
