@@ -5,6 +5,9 @@ import os
 import struct
 import subprocess
 import sys
+import nlzss
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad
 from json import load
 from base64 import b64encode, b64decode
 import lz4.block
@@ -12,11 +15,24 @@ from random import randint
 from datetime import datetime
 from time import mktime
 import sentry_sdk
+from miikaitai import Mii
 
 with open("/var/rc24/File-Maker/Channels/Check_Mii_Out_Channel/config.json", "r") as f:
         config = load(f)
 
 sentry_sdk.init(config["sentry_url"])
+
+def decToEntry(num: int) -> str: #takes decimal int, outputs 12 digit entry number string
+	num ^= ((num << 0x1E) ^ (num << 0x12) ^ (num << 0x18)) & 0xFFFFFFFF
+	num ^= (num & 0xF0F0F0F) << 4
+	num ^= (num >> 0x1D) ^ (num >> 0x11) ^ (num >> 0x17) ^ 0x20070419
+
+	crc = (num >> 8) ^ (num >> 24) ^ (num >> 16) ^ (num & 0xFF) ^ 0xFF
+	if 232 < (0xd4a50fff < num) + (crc & 0xFF):
+		crc &= 0x7F
+
+	crc &= 0xFF
+	return str(int((format(crc, '08b') + format(num, '032b')), 2)).zfill(12)
 
 def u8(data):
 	if not 0 <= data <= 255:
@@ -50,6 +66,72 @@ def decodeMii(data): #takes compressed and b64 encoded data, returns binary mii 
 
 def encodeMii(data): #takes binary mii data, returns compressed and b64 encoded data
 	return(b64encode(lz4.block.compress(data, store_size=False)).decode())
+
+
+def wii2studio(mii_file):
+    try:
+        orig_mii = Mii.from_file(mii_file)
+    except:
+        return ""
+
+    studio_mii = {}
+
+    studio_mii["facial_hair_color"] = orig_mii.facial_hair_color
+    studio_mii["beard_goatee"] = orig_mii.facial_hair_beard
+    studio_mii["body_weight"] = orig_mii.body_weight
+    studio_mii["eye_stretch"] = 3
+    studio_mii["eye_color"] = orig_mii.eye_color
+    studio_mii["eye_rotation"] = orig_mii.eye_rotation
+    studio_mii["eye_size"] = orig_mii.eye_size
+    studio_mii["eye_type"] = orig_mii.eye_type
+    studio_mii["eye_horizontal"] = orig_mii.eye_horizontal
+    studio_mii["eye_vertical"] = orig_mii.eye_vertical
+    studio_mii["eyebrow_stretch"] = 3
+    studio_mii["eyebrow_color"] = orig_mii.eyebrow_color
+    studio_mii["eyebrow_rotation"] = orig_mii.eyebrow_rotation
+    studio_mii["eyebrow_size"] = orig_mii.eyebrow_size
+    studio_mii["eyebrow_type"] = orig_mii.eyebrow_type
+    studio_mii["eyebrow_horizontal"] = orig_mii.eyebrow_horizontal
+    studio_mii["eyebrow_vertical"] = orig_mii.eyebrow_vertical
+    studio_mii["face_color"] = orig_mii.face_color
+    studio_mii["face_makeup"] = 0
+    studio_mii["face_type"] = orig_mii.face_type
+    studio_mii["face_wrinkles"] = 0
+    studio_mii["favorite_color"] = orig_mii.favorite_color
+    studio_mii["gender"] = orig_mii.gender
+    studio_mii["glasses_color"] = orig_mii.glasses_color
+    studio_mii["glasses_size"] = orig_mii.glasses_size
+    studio_mii["glasses_type"] = orig_mii.glasses_type
+    studio_mii["glasses_vertical"] = orig_mii.glasses_vertical
+    studio_mii["hair_color"] = orig_mii.hair_color
+    studio_mii["hair_flip"] = orig_mii.hair_flip
+    studio_mii["hair_type"] = orig_mii.hair_type
+    studio_mii["body_height"] = orig_mii.body_height
+    studio_mii["mole_size"] = orig_mii.mole_size
+    studio_mii["mole_enable"] = orig_mii.mole_enable
+    studio_mii["mole_horizontal"] = orig_mii.mole_horizontal
+    studio_mii["mole_vertical"] = orig_mii.mole_vertical
+    studio_mii["mouth_stretch"] = 3
+    studio_mii["mouth_color"] = orig_mii.mouth_color
+    studio_mii["mouth_size"] = orig_mii.mouth_size
+    studio_mii["mouth_type"] = orig_mii.mouth_type
+    studio_mii["mouth_vertical"] = orig_mii.mouth_vertical
+    studio_mii["beard_size"] = orig_mii.facial_hair_size
+    studio_mii["beard_mustache"] = orig_mii.facial_hair_mustache
+    studio_mii["beard_vertical"] = orig_mii.facial_hair_vertical
+    studio_mii["nose_size"] = orig_mii.nose_size
+    studio_mii["nose_type"] = orig_mii.nose_type
+    studio_mii["nose_vertical"] = orig_mii.nose_vertical
+
+    mii_data = b""
+    n = r = 256
+    mii_data += binascii.hexlify(u8(0))
+    for v in studio_mii.values():
+        eo = (7 + (v ^ n)) % 256
+        n = eo
+        mii_data += binascii.hexlify(u8(eo))
+
+    return "https://studio.mii.nintendo.com/miis/image.png?data=" + mii_data.decode("utf-8") + "&type=face&width=512&instanceCount=1"
 
 class ResetList(): #removes all miis from a list
 	def __init__(self, list_type):
@@ -463,7 +545,7 @@ class WSR(): #returns an unencrypted mii list for wii sports resort
 	def __init__(self):
 		self.miilist = []
 
-	def build(self, miis): #requires 2 dimensional array containing initials, miidata, and artisan data
+	def build(self, miis): #requires 2 dimensional array containing initials, miidata, artisan data, and entryno
 		open = int(mktime(datetime.utcnow().timetuple())) - 946684800 #current time since 1/1/2000 in seconds
 		close = int(mktime(datetime.utcnow().timetuple())) - 946512000 #current time since 1/1/2000 in seconds + 48 hours
 		self.header = u32(open) + u32(close) + bytes.fromhex('000041A0000000A864000000000000000000000000000000')
@@ -481,8 +563,9 @@ class WSR(): #returns an unencrypted mii list for wii sports resort
 			self.mii['initials'] = initial
 			self.mii['country_code'] = u8(49) #country code doesn't matter or change anything
 			self.mii['unk1'] = u32(0)
-			self.mii['entry_number1'] = u32(0) #this is actually a u64 for the 12 digit code
-			self.mii['entry_number2'] = u32(0) #except nobody knows how to convert it
+			#self.mii['entry_number1'] = u32(0) #this is actually a u64 for the 12 digit code
+			#self.mii['entry_number2'] = u32(0) #except nobody knows how to convert it
+			self.mii['entry_number'] = int(decToEntry(entry[3])).to_bytes(8, 'big')
 			self.mii['miidata'] = miidata
 			self.mii['mii_artisan'] = artisan
 
@@ -720,46 +803,43 @@ class Write():
 
 class Prepare(): #this is only used to compress and encrypt data by external scripts. any data can be used with this
 
-	def __init__(self):
-		self.filename = '/tmp/TMP{}.ces'.format(str(randint(1, 1000000)))
+    def __init__(self):
+        self.filename = '/tmp/TMP{}.ces'.format(str(randint(1, 1000000)))
 
-	def prepare(self, data): #takes only data and doesn't write it anywhere. returns the final data
-		prepared = b''
+    def prepare(self, data): #takes only data and doesn't write it anywhere. returns the final data
+        prepared = b''
 
-		with open(self.filename, 'wb') as tempfile:
-			tempfile.write(data)
+        with open(self.filename, 'wb') as tempfile:
+            tempfile.write(data)
 
-		self.compress()
-		self.encrypt()
-		self.hmac()
+        self.compress()
+        self.encrypt()
+        self.hmac()
 
-		prepared += b'MC'
-		prepared += u16(1)
-		prepared += self.hmacsha1
-		prepared += self.processed
-		os.remove(self.filename)
+        prepared += b'MC'
+        prepared += u16(1)
+        prepared += self.hmacsha1
+        prepared += self.processed
+        os.remove(self.filename)
 
-		return prepared
+        return prepared
 
-	def compress(self):
-		subprocess.call(["{}/lzss".format(config["lzss_path"]), "-evf", self.filename])
+    def compress(self):
+        nlzss.encode_file(self.filename, self.filename)
 
-	def encrypt(self):
-		subprocess.call(["openssl", "enc", "-aes-128-cbc", "-e", "-in", self.filename, "-out", self.filename + "1", "-K", "8D22A3D808D5D072027436B6303C5B50", "-iv", "BE5E548925ACDD3CD5342E08FB8ABFEC"])
+    def encrypt(self):
+        aes = AES.new(bytes.fromhex('8D22A3D808D5D072027436B6303C5B50'), AES.MODE_CBC, bytes.fromhex('BE5E548925ACDD3CD5342E08FB8ABFEC'))
+        with open(self.filename, "rb") as readf:
+            self.processed = aes.encrypt(pad(readf.read(), 16))
+        
+    def hmac(self):
+        self.sign = bytes.fromhex("4CC08FA141DE2537AAA52B8DACD9B56335AFE467")
+        self.digester = hmac.new(self.sign, self.processed, hashlib.sha1)
+        self.hmacsha1 = self.digester.digest()
 
-		with open(self.filename + "1", "rb") as readf:
-			self.processed = readf.read()
-
-		os.remove(self.filename + "1")
-		
-	def hmac(self):
-		self.sign = binascii.unhexlify("4CC08FA141DE2537AAA52B8DACD9B56335AFE467")
-		self.digester = hmac.new(self.sign, self.processed, hashlib.sha1)
-		self.hmacsha1 = self.digester.digest()
-
-	def write(self):
-		with open(self.filename, "wb+") as writef:
-			writef.write(b'MC')
-			writef.write(u16(1))
-			writef.write(self.hmacsha1)
-			writef.write(self.processed)
+    def write(self):
+        with open(self.filename, "wb+") as writef:
+            writef.write(b'MC')
+            writef.write(u16(1))
+            writef.write(self.hmacsha1)
+            writef.write(self.processed)

@@ -35,6 +35,10 @@ ip = escape(environ["REMOTE_ADDR"])
 if verifyMac(macadr) == False:
 	return403()
 
+cursor.execute('SELECT COUNT(*) FROM artisan WHERE mac = %s', [macadr])
+if cursor.fetchone()[0] == 0:
+	return403()
+
 cursor.execute('SELECT COUNT(*) FROM mii WHERE entryno = %s', [entryno])
 if cursor.fetchone()[0] == 0: #no result for provided entryno
 	stdout.buffer.write(b"Content-Type:application/octet-stream\n\n")
