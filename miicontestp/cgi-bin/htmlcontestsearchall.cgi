@@ -64,7 +64,7 @@ except TypeError:
     exit()
 
 cursor.execute(
-    "SELECT miidata,likes,entryno FROM conmiis WHERE contest = %s ORDER BY likes DESC LIMIT 50",
+    "SELECT miidata,likes,entryno FROM conmiis WHERE contest = %s ORDER BY likes DESC",
     [query],
 )
 row = cursor.fetchall()

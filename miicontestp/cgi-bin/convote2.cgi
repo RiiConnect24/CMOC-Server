@@ -14,8 +14,67 @@ sentry_sdk.init(config["sentry_url"])
 
 
 def verifyMac(mac):  # verify macaddress is valid and from a Wii
-    oui = ['0009BF', '001656', '0017AB', '00191D', '0019FD', '001AE9', '001B7A', '001BEA', '001CBE', '001DBC', '001E35', '001EA9', '001F32', '001FC5', '002147', '0021BD', '00224C', '0022AA', '0022D7', '002331', '0023CC', '00241E', '002444', '0024F3', '0025A0', '002659', '002709', '0403D6', '182A7B',
-           '2C10C1', '34AF2C', '40D28A', '40F407', '582F40', '58BDA3', '5C521E', '606BFF', '64B5C6', '78A2A0', '7CBB8A', '8C56C5', '8CCDE8', '9458CB', '98B6E9', '9CE635', 'A438CC', 'A45C27', 'A4C0E1', 'B87826', 'B88AEC', 'B8AE6E', 'CC9E00', 'CCFB65', 'D86BF7', 'DC68EB', 'E00C7F', 'E0E751', 'E84ECE', 'ECC40D']
+    oui = [
+        "0009BF",
+        "001656",
+        "0017AB",
+        "00191D",
+        "0019FD",
+        "001AE9",
+        "001B7A",
+        "001BEA",
+        "001CBE",
+        "001DBC",
+        "001E35",
+        "001EA9",
+        "001F32",
+        "001FC5",
+        "002147",
+        "0021BD",
+        "00224C",
+        "0022AA",
+        "0022D7",
+        "002331",
+        "0023CC",
+        "00241E",
+        "002444",
+        "0024F3",
+        "0025A0",
+        "002659",
+        "002709",
+        "0403D6",
+        "182A7B",
+        "2C10C1",
+        "34AF2C",
+        "40D28A",
+        "40F407",
+        "582F40",
+        "58BDA3",
+        "5C521E",
+        "606BFF",
+        "64B5C6",
+        "78A2A0",
+        "7CBB8A",
+        "8C56C5",
+        "8CCDE8",
+        "9458CB",
+        "98B6E9",
+        "9CE635",
+        "A438CC",
+        "A45C27",
+        "A4C0E1",
+        "B87826",
+        "B88AEC",
+        "B8AE6E",
+        "CC9E00",
+        "CCFB65",
+        "D86BF7",
+        "DC68EB",
+        "E00C7F",
+        "E0E751",
+        "E84ECE",
+        "ECC40D",
+    ]
     if len(mac) == 12 and mac.upper()[:6] in oui:
         return True
     else:
@@ -24,14 +83,14 @@ def verifyMac(mac):  # verify macaddress is valid and from a Wii
 
 def return403():
     stdout.flush()
-    stdout.buffer.write(b'Status: 403 Forbidden\n\n')
+    stdout.buffer.write(b"Status: 403 Forbidden\n\n")
     stdout.flush()
     exit()
 
 
 def result(id):
     stdout.flush()
-    stdout.buffer.write(b'X-RESULT: ' + str(id).encode() + b'\n\n')
+    stdout.buffer.write(b"X-RESULT: " + str(id).encode() + b"\n\n")
     stdout.flush()
     exit()
 
@@ -39,31 +98,38 @@ def result(id):
 def returnFail():
     stdout.buffer.write(b"Content-Type:application/octet-stream\n\n")
     stdout.flush()
-    stdout.buffer.write(bytes.fromhex(
-        '435600000000000000000000000000000000000000000000FFFFFFFFFFFFFFFF'))
+    stdout.buffer.write(
+        bytes.fromhex(
+            "435600000000000000000000000000000000000000000000FFFFFFFFFFFFFFFF"
+        )
+    )
     stdout.flush()
 
 
 def returnPass():
-    stdout.buffer.write(b'Content-Type:application/octet-stream\n\n')
+    stdout.buffer.write(b"Content-Type:application/octet-stream\n\n")
     stdout.flush()
-    stdout.buffer.write(bytes.fromhex(
-        '435600000000000000000000000000000000000000000000FFFFFFFFFFFFFFFF4E4C001000000001FFFFFFFFFFFFFFFF'))
+    stdout.buffer.write(
+        bytes.fromhex(
+            "435600000000000000000000000000000000000000000000FFFFFFFFFFFFFFFF4E4C001000000001FFFFFFFFFFFFFFFF"
+        )
+    )
     stdout.flush()
 
 
 db = MySQLdb.connect(
-    'localhost', config['dbuser'], config['dbpass'], 'cmoc', charset='utf8mb4')
+    "localhost", config["dbuser"], config["dbpass"], "cmoc", charset="utf8mb4"
+)
 cursor = db.cursor()
 
 form = FieldStorage()
-contestno = form['contestno'].value
-macadr = form['macadr'].value
+contestno = form["contestno"].value
+macadr = form["macadr"].value
 ip = escape(environ["REMOTE_ADDR"])
 
 try:
     # up to 3 voted craftsnos are stored into an array
-    craftsno = form['craftsno1'].value.split(',')
+    craftsno = form["craftsno1"].value.split(",")
 
 except KeyError:  # don't do anything because the user just voted on the same miis as last time
     returnPass()
@@ -78,29 +144,31 @@ if len(craftsno) > 3:  # dumbass
     craftsno = craftsno[:3]
     # return403()
 
-cursor.execute('SELECT status FROM contests WHERE id = %s', [contestno])
+cursor.execute("SELECT status FROM contests WHERE id = %s", [contestno])
 # prevent voting on a contest not accepting votes
-if cursor.fetchone()[0] != 'judging':
+if cursor.fetchone()[0] != "judging":
     returnFail()
     exit()
 
-cursor.execute('SELECT COUNT(*) FROM artisan WHERE mac = %s', [macadr])
+cursor.execute("SELECT COUNT(*) FROM artisan WHERE mac = %s", [macadr])
 if cursor.fetchone()[0] == 0:
     result(704)  # no artisan with this registered mac address
 
 cursor.execute(
-    'SELECT COUNT(*) FROM convotes WHERE mac = %s AND id = %s', (macadr, contestno))
+    "SELECT COUNT(*) FROM convotes WHERE mac = %s AND id = %s", (macadr, contestno)
+)
 if cursor.fetchone()[0] != 0:
     firstVote = False
 
 cursor.execute(
-    'SELECT ip FROM convotes WHERE mac = %s AND id = %s', (macadr, contestno))
+    "SELECT ip FROM convotes WHERE mac = %s AND id = %s", (macadr, contestno)
+)
 ipResult = cursor.fetchone()
 
 # if ipResult != None:
-    # if ipResult[0] != ip:
-        # user is probably spoofing their mac address, or has a dynamic ip
-        # result(706)
+# if ipResult[0] != ip:
+# user is probably spoofing their mac address, or has a dynamic ip
+# result(706)
 
 if firstVote:
     try:
@@ -109,16 +177,20 @@ if firstVote:
         elif len(craftsno) == 1:
             craftsno.append(craftsno[0])
             craftsno.append(craftsno[0])
-        cursor.execute('INSERT INTO convotes (id, craftsno1, craftsno2, craftsno3, mac, ip) VALUES (%s, %s, %s, %s, %s, %s)',
-                       (contestno, craftsno[0], craftsno[1], craftsno[2], macadr, ip))  # log their vote
+        cursor.execute(
+            "INSERT INTO convotes (id, craftsno1, craftsno2, craftsno3, mac, ip) VALUES (%s, %s, %s, %s, %s, %s)",
+            (contestno, craftsno[0], craftsno[1], craftsno[2], macadr, ip),
+        )  # log their vote
     except IndexError:
-        log = str(form['craftsno1'].value) + " " + str(len(craftsno))
+        log = str(form["craftsno1"].value) + " " + str(len(craftsno))
 
         raise IndexError(log)
 
 else:  # the user is changing their vote
     cursor.execute(
-        'SELECT craftsno1, craftsno2, craftsno3 FROM convotes WHERE mac = %s AND id = %s LIMIT 1', (macadr, contestno))
+        "SELECT craftsno1, craftsno2, craftsno3 FROM convotes WHERE mac = %s AND id = %s LIMIT 1",
+        (macadr, contestno),
+    )
     result = cursor.fetchone()
     newVotes = []
     for c in range(3):  # horrible
@@ -128,8 +200,10 @@ else:  # the user is changing their vote
         except IndexError:
             newVotes.append(result[c])
 
-    cursor.execute('UPDATE convotes SET craftsno1 = %s, craftsno2 = %s, craftsno3 = %s WHERE mac = %s AND id = %s',
-                   (newVotes[0], newVotes[1], newVotes[2], macadr, contestno))
+    cursor.execute(
+        "UPDATE convotes SET craftsno1 = %s, craftsno2 = %s, craftsno3 = %s WHERE mac = %s AND id = %s",
+        (newVotes[0], newVotes[1], newVotes[2], macadr, contestno),
+    )
 
 db.commit()
 db.close()

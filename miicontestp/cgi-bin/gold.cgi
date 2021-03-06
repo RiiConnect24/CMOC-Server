@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 from sys import stdout
 from cgi import FieldStorage
-from struct import pack
-from base64 import b64encode, b64decode
-import lz4.block
+from base64 import b64encode
 import MySQLdb
+import lz4.block
+from struct import pack
 from json import load
 from datadog import statsd
 from crc16 import crc16xmodem
@@ -122,16 +122,6 @@ def result(id):
     exit()
 
 
-def naughtyWord(word):  # uppercase bad word list is stored in the config file in base64
-    badwords = b64decode(config["badwords"]).decode().split("\n")
-    for i in word.upper().replace(" ", "_").split("_"):
-        if i in badwords:
-            return True
-            break
-
-    return False
-
-
 form = FieldStorage(
     errors="surrogateescape"
 )  # surrogateescape is used to get binary data in forms that are mixed with string data
@@ -140,47 +130,65 @@ db = MySQLdb.connect(
     "localhost", config["dbuser"], config["dbpass"], "cmoc", charset="utf8mb4"
 )
 cursor = db.cursor()
-
-nickname = form["nickname"].value
-country = form["country"].value
+entryno = form["entryno"].value
 wiino = form["wiino"].value
 macadr = form["macadr"].value
-miidata = (
-    form["miidata"].file.read().encode("utf-8", "surrogateescape")
-)  # hack to base64 encode multipart form embedded binary
+country = form["country"].value
+sex = form["sex"].value
+skill = form["skill"].value
+nickname = form["nickname"].value
+miiid = form["miiid"].value
+craftsno = form["craftsno"].value
+initial = form["initial"].value.upper()
+miidata = form["miidata"].file.read().encode("utf-8", "surrogateescape")
+
 
 # mii data should ALWAYS be exactly 76 bytes
 if len(miidata) != 76:
-    result(305)
+    result(109)
 if len(nickname) > 10 or len(nickname) < 1:
-    result(304)
+    result(108)
 if verifyMac(macadr) == False:
-    result(303)
+    result(107)
 if checkWiino(wiino) == False:
-    result(310)
-if naughtyWord(nickname):
-    result(307)
+    result(116)
 
 crc1 = int.from_bytes(miidata[-2:], "big")  # crc16 that CMOC sends to the server
 crc2 = crc16xmodem(miidata[:-2])  # recalculated crc16 that the server confirms
 if crc1 != crc2:
-    result(306)
+    result(110)
 
 miidata = encodeMii(miidata)
 
-craftsno = form["craftsno"].value
-cursor.execute(
-    "SELECT count(*) FROM artisan WHERE craftsno = %s AND wiino = %s", (craftsno, wiino)
-)
+cursor.execute("SELECT wiino FROM artisan WHERE craftsno = %s", [craftsno])
+wiinoResult = cursor.fetchone()
 
-if (
-    cursor.fetchone()[0] != 0
-):  # UPDATE a mii entry if it already exists, and give it the same entry number
+if wiinoResult == None:
+    result(106)
+
+if int(wiinoResult[0]) == int(
+    wiino
+):  # prevents uploading if its wii number isnt the same as the artisan's
     cursor.execute(
-        "UPDATE artisan SET nickname = %s, miidata = %s WHERE craftsno = %s",
-        (nickname, miidata, craftsno),
+        "INSERT INTO mii (craftsno, initial, skill, nickname, sex, country, wiino, miiid, miidata) \
+	VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)",
+        (craftsno, initial, skill, nickname, sex, country, wiino, miiid, miidata),
+    )  # add mii to table. 0 is set because ID auto-increments
+    cursor.execute(
+        "SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'cmoc' AND TABLE_NAME = 'mii'"
+    )  # get next entryno in list
+    result = (
+        int(cursor.fetchone()[0]) - 1
+    )  # gives the user this mii's index, rather than the one ahead of it
+    cursor.execute(
+        "UPDATE artisan SET postcount = postcount+1 WHERE craftsno = %s", [craftsno]
     )
-    result = int(craftsno)
+    cursor.execute(
+        "UPDATE artisan SET lastpost = (SELECT CURRENT_TIMESTAMP()) WHERE craftsno = %s",
+        [craftsno],
+    )
+    statsd.increment("cmoc.posts")
+
     cursor.execute(
         "SELECT mac FROM artisan WHERE craftsno = %s", [craftsno]
     )  # log their mac address since its needed now for contests
@@ -189,29 +197,18 @@ if (
             "UPDATE artisan SET mac = %s WHERE craftsno = %s", (macadr, craftsno)
         )
 
-else:
-    cursor.execute(
-        "INSERT INTO artisan(nickname, country, wiino, mac, miidata)\
-	VALUES(%s, %s, %s, %s, %s)",
-        (nickname, country, wiino, macadr, miidata),
-    )
-    cursor.execute(
-        "SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'cmoc' AND TABLE_NAME = 'artisan'"
-    )  # get next craftsno in list
-    result = (
-        int(cursor.fetchone()[0]) - 1
-    )  # gives the user a new index BUT REMOVE ONE OR ELSE!!!!! YOU MUST!!!!!!!!!!!
-    statsd.increment("cmoc.registers")
+    data = bytes.fromhex(
+        "505300000000000000000000000000000000000000000000FFFFFFFFFFFFFFFF454E000C00000001"
+    ) + u32(
+        result
+    )  # responds with the mii's entry number
+    stdout.buffer.write(b"Content-Type:application/octet-stream\n\n")
+    stdout.flush()
+    stdout.buffer.write(data)
+    stdout.flush()
 
-data = bytes.fromhex(
-    "4D5300000000000000000000000000000000000000000000FFFFFFFFFFFFFFFF454E000C00000001"
-) + u32(
-    int(result)
-)  # tells CMOC its craftsno
+    db.commit()
+    db.close()
 
-stdout.flush()
-stdout.buffer.write(b"Content-Type:application/octet-stream\n\n")
-stdout.flush()
-stdout.buffer.write(data)
-db.commit()
-db.close()
+else:  # 105 them if they're on a different wii than the one they registered their artisan with
+    result(105)
