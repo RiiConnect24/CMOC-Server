@@ -1,0 +1,7 @@
+crc16
+datadog
+kaitaistruct
+lz4
+mysqlclient
+pycryptodome
+sentry_sdk
