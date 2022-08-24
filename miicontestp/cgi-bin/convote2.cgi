@@ -1,16 +1,16 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from cgi import FieldStorage
 from html import escape
 from os import environ
 from sys import stdout
 import MySQLdb
 from json import load
-import sentry_sdk
+#import sentry_sdk
 
 with open("/var/rc24/File-Maker/Channels/Check_Mii_Out_Channel/config.json", "r") as f:
     config = load(f)
 
-sentry_sdk.init(config["sentry_url"])
+#sentry_sdk.init(config["sentry_url"])
 
 
 def verifyMac(mac):  # verify macaddress is valid and from a Wii
@@ -118,7 +118,7 @@ def returnPass():
 
 
 db = MySQLdb.connect(
-    "localhost", config["dbuser"], config["dbpass"], "cmoc", charset="utf8mb4"
+    "localhost", config["dbuser"], config["dbpass"], "rc24_cmoc", charset="utf8mb4"
 )
 cursor = db.cursor()
 
@@ -155,15 +155,15 @@ if cursor.fetchone()[0] == 0:
     result(704)  # no artisan with this registered mac address
 
 cursor.execute(
-    "SELECT COUNT(*) FROM convotes WHERE mac = %s AND id = %s", (macadr, contestno)
+    "SELECT COUNT(*) FROM convotes WHERE mac = %s AND id = %s OR ip = %s AND id = %s", (macadr, contestno, ip, contestno)
 )
 if cursor.fetchone()[0] != 0:
     firstVote = False
 
-cursor.execute(
-    "SELECT ip FROM convotes WHERE mac = %s AND id = %s", (macadr, contestno)
-)
-ipResult = cursor.fetchone()
+#cursor.execute(
+#    "SELECT ip FROM convotes WHERE mac = %s AND id = %s", (macadr, contestno)
+#)
+#ipResult = cursor.fetchone()
 
 # if ipResult != None:
 # if ipResult[0] != ip:

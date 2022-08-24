@@ -1,16 +1,16 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from sys import stdout
 from cgi import FieldStorage
 from html import escape
 import MySQLdb
 from json import load
 from os import environ
-import sentry_sdk
+#import sentry_sdk
 
 with open("/var/rc24/File-Maker/Channels/Check_Mii_Out_Channel/config.json", "r") as f:
     config = load(f)
 
-sentry_sdk.init(config["sentry_url"])
+#sentry_sdk.init(config["sentry_url"])
 
 
 def verifyMac(mac):  # verify macaddress is valid and from a Wii
@@ -90,7 +90,7 @@ def return403():
 
 form = FieldStorage()
 db = MySQLdb.connect(
-    "localhost", config["dbuser"], config["dbpass"], "cmoc", charset="utf8mb4"
+    "localhost", config["dbuser"], config["dbpass"], "rc24_cmoc", charset="utf8mb4"
 )
 cursor = db.cursor()
 # action = form['action'].value
@@ -119,7 +119,7 @@ if cursor.fetchone()[0] == 0:  # no result for provided entryno
     exit()
 
 cursor.execute(
-    "SELECT COUNT(*) FROM votes WHERE mac = %s AND entryno = %s", (macadr, entryno)
+    "SELECT COUNT(*) FROM votes WHERE mac = %s AND entryno = %s OR ip = %s AND entryno = %s", (macadr, entryno, ip, entryno)
 )
 if cursor.fetchone()[0] == 0:  # this mac address has not voted on this mii before
     cursor.execute(

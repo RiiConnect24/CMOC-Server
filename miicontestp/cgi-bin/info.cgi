@@ -1,16 +1,16 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from sys import stdout
 from cgi import FieldStorage
 from struct import pack
 import MySQLdb
 from json import load
 from cmoc import QuickList
-import sentry_sdk
+#import sentry_sdk
 
 with open("/var/rc24/File-Maker/Channels/Check_Mii_Out_Channel/config.json", "r") as f:
     config = load(f)
 
-sentry_sdk.init(config["sentry_url"])
+#sentry_sdk.init(config["sentry_url"])
 
 
 def u8(data):
@@ -30,7 +30,7 @@ def u32(data):
 ql = QuickList()
 form = FieldStorage()
 db = MySQLdb.connect(
-    "localhost", config["dbuser"], config["dbpass"], "cmoc", charset="utf8mb4"
+    "localhost", config["dbuser"], config["dbpass"], "rc24_cmoc", charset="utf8mb4"
 )
 cursor = db.cursor()
 

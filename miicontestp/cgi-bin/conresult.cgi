@@ -1,16 +1,16 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from cgi import FieldStorage
 from sys import stdout
 from cmoc import ConResult
 import MySQLdb
 from json import load
 from sys import stdout
-import sentry_sdk
+#import sentry_sdk
 
 with open("/var/rc24/File-Maker/Channels/Check_Mii_Out_Channel/config.json", "r") as f:
     config = load(f)
 
-sentry_sdk.init(config["sentry_url"])
+#sentry_sdk.init(config["sentry_url"])
 
 
 def result(id):
@@ -21,7 +21,7 @@ def result(id):
 
 
 db = MySQLdb.connect(
-    "localhost", config["dbuser"], config["dbpass"], "cmoc", charset="utf8mb4"
+    "localhost", config["dbuser"], config["dbpass"], "rc24_cmoc", charset="utf8mb4"
 )
 cursor = db.cursor()
 cr = ConResult()
@@ -52,11 +52,11 @@ for i in artisans:
         "SELECT `rank` FROM conmiis WHERE craftsno = %s AND contest = %s",
         (i, contestno),
     )
-    rank = cursor.fetchone()[0]
     try:
+        rank = cursor.fetchone()[0]
         miilist.append((int(i), int(rank)))
     except:
-        error = str(i) + " " + str(rank) + " " + str(contestno)
+        miilist.append((int(i), int(0)))
 
 data = cr.build(int(contestno), miilist)
 stdout.buffer.write(b"Content-Type:application/octet-stream\n\n")

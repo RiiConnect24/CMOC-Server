@@ -1,19 +1,17 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from sys import stdout
 from cgi import FieldStorage
 from struct import pack
-import sentry_sdk
 from binascii import hexlify, unhexlify
-from requests import get
 from gen1_wii import Gen1Wii
-import io
-from json import load
-import sentry_sdk
+import pycurl
+from io import BytesIO
+#import sentry_sdk
 
-with open("/var/rc24/File-Maker/Channels/Check_Mii_Out_Channel/config.json", "r") as f:
-    config = load(f)
+#with open("/var/rc24/File-Maker/Channels/Check_Mii_Out_Channel/config.json", "r") as f:
+#   config = load(f)
 
-sentry_sdk.init(config["sentry_url"])
+#sentry_sdk.init(config["sentry_url"])
 
 form = FieldStorage()
 
@@ -30,7 +28,7 @@ makeup = {1: 1, 2: 6, 3: 9, 9: 10}  # lookup table
 
 wrinkles = {4: 5, 5: 2, 6: 3, 7: 7, 8: 8, 10: 9, 11: 11}  # lookup table
 
-# ue generate the Mii Studio file by reading each Mii format from the Kaitai files.
+# we generate the Mii Studio file by reading each Mii format from the Kaitai files.
 # unlike consoles which store Mii data in an odd number of bits,
 # all the Mii data for a Mii Studio Mii is stored as unsigned 8-bit integers. makes it easier.
 
@@ -115,11 +113,16 @@ for v in mii_dict:
     n = eo
     mii_data += hexlify(u8(eo))
 
-mii = get(
-    "https://studio.mii.nintendo.com/miis/image.png?data="
+buffer = BytesIO()
+c = pycurl.Curl()
+c.setopt(c.URL, "https://studio.mii.nintendo.com/miis/image.png?data="
     + mii_data.decode("utf-8")
-    + "&type=face&width=512&instanceCount=1"
-).content
+    + "&type=face&width=512&instanceCount=1")
+c.setopt(c.WRITEDATA, buffer)
+c.perform()
+c.close()
+
+mii = buffer.getvalue()
 
 stdout.buffer.write(b"Content-Type:image/png\n\n")
 stdout.flush()

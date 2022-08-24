@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from sys import stdout
 from cgi import FieldStorage
 from struct import pack
@@ -9,12 +9,12 @@ from json import load
 from datadog import statsd
 from crc16 import crc16xmodem
 from subprocess import check_output
-import sentry_sdk
+#import sentry_sdk
 
 with open("/var/rc24/File-Maker/Channels/Check_Mii_Out_Channel/config.json", "r") as f:
     config = load(f)
 
-sentry_sdk.init(config["sentry_url"])
+#sentry_sdk.init(config["sentry_url"])
 
 
 def u32(data):
@@ -137,7 +137,7 @@ form = FieldStorage(
 )  # surrogateescape is used to get binary data in forms that are mixed with string data
 
 db = MySQLdb.connect(
-    "localhost", config["dbuser"], config["dbpass"], "cmoc", charset="utf8mb4"
+    "localhost", config["dbuser"], config["dbpass"], "rc24_cmoc", charset="utf8mb4"
 )
 cursor = db.cursor()
 
@@ -161,10 +161,10 @@ if checkWiino(wiino) == False:
 if naughtyWord(nickname):
     result(307)
 
-crc1 = int.from_bytes(miidata[-2:], "big")  # crc16 that CMOC sends to the server
+"""crc1 = int.from_bytes(miidata[-2:], "big")  # crc16 that CMOC sends to the server
 crc2 = crc16xmodem(miidata[:-2])  # recalculated crc16 that the server confirms
 if crc1 != crc2:
-    result(306)
+    result(306)"""
 
 miidata = encodeMii(miidata)
 
@@ -196,7 +196,7 @@ else:
         (nickname, country, wiino, macadr, miidata),
     )
     cursor.execute(
-        "SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'cmoc' AND TABLE_NAME = 'artisan'"
+        "SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'rc24_cmoc' AND TABLE_NAME = 'artisan'"
     )  # get next craftsno in list
     result = (
         int(cursor.fetchone()[0]) - 1

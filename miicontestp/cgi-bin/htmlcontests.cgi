@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import cgi
 import cgitb
 
@@ -9,7 +9,6 @@ from base64 import b64decode
 from os.path import exists
 from subprocess import call, DEVNULL
 from json import load
-from cmoc import wii2studio
 from datetime import datetime
 
 with open("/var/rc24/File-Maker/Channels/Check_Mii_Out_Channel/config.json", "r") as f:
@@ -42,7 +41,7 @@ db = MySQLdb.connect(
     "localhost",
     config["dbuser"],
     config["dbpass"],
-    "cmoc",
+    "rc24_cmoc",
     use_unicode=True,
     charset="utf8mb4",
 )
@@ -58,7 +57,7 @@ cursor.execute(
 )
 row = cursor.fetchall()
 
-head = f'<!DOCTYPE html>\n<html>\n<head>\n<title>Contest List</title>\n<meta http-equiv="Content-Type" content="text/html; charset=utf-8">\n<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">\n<link href="https://miicontest.wii.rc24.xyz/css/style.css" rel="Stylesheet" type="text/css" />\n<link href="https://miicontest.wii.rc24.xyz/css/ctmkf.css" rel="Stylesheet" type="text/css" />\n<link rel="apple-touch-icon" sizes="180x180" href="https://miicontest.wii.rc24.xyz/apple-touch-icon.png">\n<link rel="icon" type="image/png" sizes="32x32" href="https://miicontest.wii.rc24.xyz/favicon-32x32.png">\n<link rel="icon" type="image/png" sizes="16x16" href="https://miicontest.wii.rc24.xyz/favicon-16x16.png">\n<link rel="manifest" href="https://miicontest.wii.rc24.xyz/site.webmanifest">\n<link rel="mask-icon" href="https://miicontest.wii.rc24.xyz/safari-pinned-tab.svg" color="#89c0ca">\n<meta name="msapplication-TileColor" content="#2d89ef">\n<meta name="theme-color" content="#ffffff">\n</head>\n\n<body class="center">\n<h2><img src="https://miicontest.wii.rc24.xyz/images/rankings.png" id="icon"> Contest List</h2>'
+head = f'<!DOCTYPE html>\n<html>\n<head>\n<title>Contest List</title>\n<meta http-equiv="Content-Type" content="text/html; charset=utf-8">\n<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">\n<link href="https://miicontest.wii.rc24.xyz/css/style.css" rel="Stylesheet" type="text/css" />\n<link href="https://miicontest.wii.rc24.xyz/css/ctmkf.css" rel="Stylesheet" type="text/css" />\n<link rel="apple-touch-icon" sizes="180x180" href="https://miicontest.wii.rc24.xyz/apple-touch-icon.png">\n<link rel="icon" type="image/png" sizes="32x32" href="https://miicontest.wii.rc24.xyz/favicon-32x32.png">\n<link rel="icon" type="image/png" sizes="16x16" href="https://miicontest.wii.rc24.xyz/favicon-16x16.png">\n<link rel="manifest" href="https://miicontest.wii.rc24.xyz/site.webmanifest">\n<link rel="mask-icon" href="https://miicontest.wii.rc24.xyz/safari-pinned-tab.svg" color="#89c0ca">\n<meta name="msapplication-TileColor" content="#2d89ef">\n<meta name="theme-color" content="#ffffff">\n\n<meta name="viewport" content="width=device-width, initial-scale=1.0"/></head>\n\n<body class="center">\n<h2><img src="https://miicontest.wii.rc24.xyz/images/rankings.png" id="icon"> Contest List</h2>'
 table = f'<table class="striped" align="center">\n' + headers
 
 for i in range(len(row)):

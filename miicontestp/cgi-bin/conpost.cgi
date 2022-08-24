@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from sys import stdout
 from cgi import FieldStorage
 from html import escape
@@ -9,12 +9,12 @@ from json import load
 import lz4.block
 from crc16 import crc16xmodem
 from subprocess import check_output
-import sentry_sdk
+#import sentry_sdk
 
 with open("/var/rc24/File-Maker/Channels/Check_Mii_Out_Channel/config.json", "r") as f:
     config = load(f)
 
-sentry_sdk.init(config["sentry_url"])
+#sentry_sdk.init(config["sentry_url"])
 
 
 def result(id):
@@ -120,7 +120,7 @@ form = FieldStorage(
 )  # surrogateescape is used to get binary data in forms that are mixed with string data
 
 db = MySQLdb.connect(
-    "localhost", config["dbuser"], config["dbpass"], "cmoc", charset="utf8mb4"
+    "localhost", config["dbuser"], config["dbpass"], "rc24_cmoc", charset="utf8mb4"
 )
 cursor = db.cursor()
 contestno = form["contestno"].value
@@ -155,10 +155,10 @@ if verifyMac(macadr) == False:
 if checkWiino(wiino) == False:
     result(611)
 
-crc1 = int.from_bytes(miidata[-2:], "big")  # crc16 that CMOC sends to the server
+"""crc1 = int.from_bytes(miidata[-2:], "big")  # crc16 that CMOC sends to the server
 crc2 = crc16xmodem(miidata[:-2])  # recalculated crc16 that the server confirms
 if crc1 != crc2:
-    result(605)
+    result(605)"""
 
 miidata = encodeMii(miidata)
 
@@ -173,8 +173,8 @@ else:
         if int(c[0]) == int(craftsno):
             verified = True
 
-if not verified:
-    result(606)  # mac address belongs to another artisan
+# if not verified:
+#    result(606)  # mac address belongs to another artisan
 
 cursor.execute("SELECT COUNT(*) FROM artisan WHERE wiino = %s", [int(wiino)])
 if cursor.fetchone()[0] == 0:

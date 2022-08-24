@@ -1,30 +1,30 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import MySQLdb
 from cmoc import Search
 from sys import stdout
 from cgi import FieldStorage
 from json import load
-import struct
-import sentry_sdk
+from struct import pack
+#import sentry_sdk
 
 with open("/var/rc24/File-Maker/Channels/Check_Mii_Out_Channel/config.json", "r") as f:
     config = load(f)
 
-sentry_sdk.init(config["sentry_url"])
+#sentry_sdk.init(config["sentry_url"])
 
 
 def u32(data):
     if not 0 <= data <= 4294967295:
         log("u32 out of range: %s" % data, "INFO")
         data = 0
-    return struct.pack(">I", data)
+    return pack(">I", data)
 
 
 form = FieldStorage()
 Search = Search()
 
 db = MySQLdb.connect(
-    "localhost", config["dbuser"], config["dbpass"], "cmoc", charset="utf8mb4"
+    "localhost", config["dbuser"], config["dbpass"], "rc24_cmoc", charset="utf8mb4"
 )
 entryno = int(form["entryno"].value)
 cursor = db.cursor()
