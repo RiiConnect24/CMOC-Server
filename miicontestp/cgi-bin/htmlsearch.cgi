@@ -26,7 +26,7 @@ def decToEntry(
     num ^= (num >> 0x1D) ^ (num >> 0x11) ^ (num >> 0x17) ^ 0x20070419
 
     crc = (num >> 8) ^ (num >> 24) ^ (num >> 16) ^ (num & 0xFF) ^ 0xFF
-    if 232 < (0xD4A50FFF < num) + (crc & 0xFF):
+    if (num > 0xD4A50FFF) + (crc & 0xFF) > 232:
         crc &= 0x7F
 
     crc &= 0xFF
@@ -95,9 +95,7 @@ table = (
 for i in range(len(row)):
     artisan = row[i][5]
     initial = row[i][2]
-    mii_filename = "/var/www/rc24/wapp.wii.com/miicontest/public_html/render/entry-{}.mii".format(
-        entryno
-    )
+    mii_filename = f"/var/www/rc24/wapp.wii.com/miicontest/public_html/render/entry-{entryno}.mii"
     if not exists(mii_filename):
         with open(mii_filename, "wb") as f:
             miidata = decodeMii(row[i][0])[:-2]
@@ -112,12 +110,12 @@ for i in range(len(row)):
     if len(initial) == 1:
         initial += "."
     elif len(initial) == 2:
-        initial = initial[0] + "." + initial[1] + "."
+        initial = f"{initial[0]}.{initial[1]}."
 
     if bool(row[i][6]):
         artisan += '<br><img width = 125 src="https://miicontest.wii.rc24.xyz/images/master.png" />'
 
-    longentry = query[:4] + "-" + query[4:8] + "-" + query[8:12]
+    longentry = f"{query[:4]}-{query[4:8]}-{query[8:12]}"
     table += "\t<tr>\n"
     table += f'\t\t<td><a href="https://miicontest.wii.rc24.xyz/render/entry-{entryno}.mii"><img width="75" src="{wii2studio(mii_filename)}"/></a></td>\n'
     table += f"\t\t<td>{row[i][4]}</td>\n"

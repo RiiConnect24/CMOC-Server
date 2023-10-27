@@ -15,7 +15,7 @@ with open("/var/rc24/File-Maker/Channels/Check_Mii_Out_Channel/config.json", "r"
 
 def u32(data):
     if not 0 <= data <= 4294967295:
-        log("u32 out of range: %s" % data, "INFO")
+        log(f"u32 out of range: {data}", "INFO")
         data = 0
     return struct.pack(">I", data)
 
@@ -48,7 +48,8 @@ craftsno = int(result[0])
 nickname = str(result[1])
 
 cursor.execute(
-    "SELECT craftsno,entryno FROM mii WHERE nickname LIKE %s", [("%" + nickname + "%")]
+    "SELECT craftsno,entryno FROM mii WHERE nickname LIKE %s",
+    [f"%{nickname}%"],
 )
 numbers = cursor.fetchall()
 

@@ -30,16 +30,20 @@ contestno = form["contestno"].value
 
 artisans = []
 try:  # bangladesh code but it works
-    artisans.append(form["craftsno1"].value)
-    artisans.append(form["craftsno2"].value)
-    artisans.append(form["craftsno3"].value)
+    artisans.extend(
+        (
+            form["craftsno1"].value,
+            form["craftsno2"].value,
+            form["craftsno3"].value,
+        )
+    )
     judgingMiis = True
 
 except KeyError:
     artisans.append(form["craftsno1"].value)
     judgingMiis = False
 
-if judgingMiis == True:
+if judgingMiis:
     try:
         artisans.append(form["craftsno4"].value)
 
@@ -56,7 +60,7 @@ for i in artisans:
         rank = cursor.fetchone()[0]
         miilist.append((int(i), int(rank)))
     except:
-        miilist.append((int(i), int(0)))
+        miilist.append((int(i), 0))
 
 data = cr.build(int(contestno), miilist)
 stdout.buffer.write(b"Content-Type:application/octet-stream\n\n")

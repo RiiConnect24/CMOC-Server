@@ -56,15 +56,9 @@ studio_mii["eyebrow_type"] = orig_mii.eyebrow_type
 studio_mii["eyebrow_horizontal"] = orig_mii.eyebrow_horizontal
 studio_mii["eyebrow_vertical"] = orig_mii.eyebrow_vertical
 studio_mii["face_color"] = orig_mii.face_color
-if orig_mii.facial_feature in makeup:
-    studio_mii["face_makeup"] = makeup[orig_mii.facial_feature]
-else:
-    studio_mii["face_makeup"] = 0
+studio_mii["face_makeup"] = makeup.get(orig_mii.facial_feature, 0)
 studio_mii["face_type"] = orig_mii.face_type
-if orig_mii.facial_feature in wrinkles:
-    studio_mii["face_wrinkles"] = wrinkles[orig_mii.facial_feature]
-else:
-    studio_mii["face_wrinkles"] = 0
+studio_mii["face_wrinkles"] = wrinkles.get(orig_mii.facial_feature, 0)
 studio_mii["favorite_color"] = orig_mii.favorite_color
 studio_mii["gender"] = orig_mii.gender
 if orig_mii.glasses_color == 0:
