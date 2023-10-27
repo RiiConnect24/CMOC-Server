@@ -75,10 +75,7 @@ def verifyMac(mac):  # verify macaddress is valid and from a Wii
         "E84ECE",
         "ECC40D",
     ]
-    if len(mac) == 12 and mac.upper()[:6] in oui:
-        return True
-    else:
-        return False
+    return len(mac) == 12 and mac.upper()[:6] in oui
 
 
 def return403():
@@ -135,8 +132,6 @@ except KeyError:  # don't do anything because the user just voted on the same mi
     returnPass()
     exit()
 
-firstVote = True
-
 if verifyMac(macadr) == False:
     result(701)
 
@@ -157,9 +152,7 @@ if cursor.fetchone()[0] == 0:
 cursor.execute(
     "SELECT COUNT(*) FROM convotes WHERE mac = %s AND id = %s OR ip = %s AND id = %s", (macadr, contestno, ip, contestno)
 )
-if cursor.fetchone()[0] != 0:
-    firstVote = False
-
+firstVote = cursor.fetchone()[0] == 0
 #cursor.execute(
 #    "SELECT ip FROM convotes WHERE mac = %s AND id = %s", (macadr, contestno)
 #)

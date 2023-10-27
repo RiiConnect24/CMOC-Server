@@ -15,7 +15,7 @@ with open("/var/rc24/File-Maker/Channels/Check_Mii_Out_Channel/config.json", "r"
 
 def u32(data):
     if not 0 <= data <= 4294967295:
-        log("u32 out of range: %s" % data, "INFO")
+        log(f"u32 out of range: {data}", "INFO")
         data = 0
     return pack(">I", data)
 
@@ -56,12 +56,7 @@ response = cursor.fetchone()
 artisan = response[0]
 master = response[1]
 
-miis = []
-for i in range(len(mii)):
-    miis.append(
-        mii[i] + (artisan, craftsno, master)
-    )  # adds the artisan data into the array of mii data
-
+miis = [mii[i] + (artisan, craftsno, master) for i in range(len(mii))]
 processed = Search.build("SR", miis, entryno, craftsno)
 mii = b""
 

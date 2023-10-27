@@ -15,14 +15,14 @@ with open("/var/rc24/File-Maker/Channels/Check_Mii_Out_Channel/config.json", "r"
 
 def u8(data):
     if not 0 <= data <= 255:
-        log("u8 out of range: %s" % data, "INFO")
+        log(f"u8 out of range: {data}", "INFO")
         data = 0
     return pack(">B", data)
 
 
 def u32(data):
     if not 0 <= data <= 4294967295:
-        log("u32 out of range: %s" % data, "INFO")
+        log(f"u32 out of range: {data}", "INFO")
         data = 0
     return pack(">I", data)
 
@@ -43,12 +43,11 @@ craftsno = int(
 cursor.execute("SELECT master,popularity FROM artisan WHERE craftsno = %s", [craftsno])
 response = cursor.fetchone()
 
-if response == None:  # sends user save file corrupted message
+if response is None:  # sends user save file corrupted message
     stdout.buffer.write(b"Content-Type:application/octet-stream\n\n")
     stdout.flush()
     stdout.buffer.write(
-        bytes.fromhex("494E000000000000")
-        + u32(int(craftsno))
+        (bytes.fromhex("494E000000000000") + u32(craftsno))
         + bytes.fromhex("000000000000000000000000FFFFFFFF00000000")
     )
     exit()
@@ -74,7 +73,7 @@ cursor.execute(
 )
 response = cursor.fetchone()
 
-if response == None:  # displays the default mii if the user has 0 posts
+if response is None:  # displays the default mii if the user has 0 posts
     entryno = 1
     miidata = "XYAAAD8AAQD9EUBAhjl7y8ImXCgABEJAMb0oogiMCEAUSbiNAIoAiiUEMQBQAAAA6ik="
     initial = "00"

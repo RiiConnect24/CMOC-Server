@@ -19,7 +19,7 @@ with open("/var/rc24/File-Maker/Channels/Check_Mii_Out_Channel/config.json", "r"
 
 def u32(data):
     if not 0 <= data <= 4294967295:
-        log("u32 out of range: %s" % data, "INFO")
+        log(f"u32 out of range: {data}", "INFO")
         data = 0
     return pack(">I", data)
 
@@ -86,10 +86,7 @@ def verifyMac(mac):  # verify macaddress is valid and from a Wii
         "E84ECE",
         "ECC40D",
     ]
-    if len(mac) == 12 and mac.upper()[:6] in oui:
-        return True
-    else:
-        return False
+    return len(mac) == 12 and mac.upper()[:6] in oui
 
 
 def checkWiino(wiino):
@@ -101,14 +98,10 @@ def checkWiino(wiino):
     wiino = str(wiino).zfill(16)
     if len(wiino) > 16:
         return False
-    else:
-        checkResult = check_output(
-            "wiino check {}".format(wiino), shell=True, universal_newlines=True
-        )
-        if int(checkResult) == 0:
-            return True
-        else:
-            return False
+    checkResult = check_output(
+        f"wiino check {wiino}", shell=True, universal_newlines=True
+    )
+    return int(checkResult) == 0
 
 
 def encodeMii(data):  # takes binary mii data, returns compressed and b64 encoded data
@@ -124,12 +117,7 @@ def result(id):
 
 def naughtyWord(word):  # uppercase bad word list is stored in the config file in base64
     badwords = b64decode(config["badwords"]).decode().split("\n")
-    for i in word.upper().replace(" ", "_").split("_"):
-        if i in badwords:
-            return True
-            break
-
-    return False
+    return any(i in badwords for i in word.upper().replace(" ", "_").split("_"))
 
 
 form = FieldStorage(
@@ -184,7 +172,7 @@ if (
     cursor.execute(
         "SELECT mac FROM artisan WHERE craftsno = %s", [craftsno]
     )  # log their mac address since its needed now for contests
-    if cursor.fetchone()[0] == None:
+    if cursor.fetchone()[0] is None:
         cursor.execute(
             "UPDATE artisan SET mac = %s WHERE craftsno = %s", (macadr, craftsno)
         )

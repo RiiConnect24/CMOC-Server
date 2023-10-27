@@ -14,7 +14,7 @@ with open("/var/rc24/File-Maker/Channels/Check_Mii_Out_Channel/config.json", "r"
 
 def u32(data):
     if not 0 <= data <= 4294967295:
-        log("u32 out of range: %s" % data, "INFO")
+        log(f"u32 out of range: {data}", "INFO")
         data = 0
     return pack(">I", data)
 

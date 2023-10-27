@@ -27,7 +27,7 @@ def decToEntry(
     num ^= (num >> 0x1D) ^ (num >> 0x11) ^ (num >> 0x17) ^ 0x20070419
 
     crc = (num >> 8) ^ (num >> 24) ^ (num >> 16) ^ (num & 0xFF) ^ 0xFF
-    if 232 < (0xD4A50FFF < num) + (crc & 0xFF):
+    if (num > 0xD4A50FFF) + (crc & 0xFF) > 232:
         crc &= 0x7F
 
     crc &= 0xFF
@@ -51,8 +51,6 @@ cursor = db.cursor()
 headers = ["Rank", "Mii", "Likes"]
 for h in range(len(headers)):
     headers[h] = "\t\t<th>" + headers[h] + "</th>\n"
-headers = "\t<tr>\n" + "".join(headers) + "\t</tr>\n"
-
 cursor.execute("SELECT description FROM contests WHERE id = %s", [query])
 try:
     contestName = cursor.fetchone()[0]
@@ -70,20 +68,13 @@ cursor.execute(
 row = cursor.fetchall()
 
 head = f'<!DOCTYPE html>\n<html>\n<head>\n<title>Contest Rankings</title>\n<meta http-equiv="Content-Type" content="text/html; charset=utf-8">\n<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">\n<link href="https://miicontest.wii.rc24.xyz/css/style.css" rel="Stylesheet" type="text/css" />\n<link href="https://miicontest.wii.rc24.xyz/css/ctmkf.css" rel="Stylesheet" type="text/css" />\n<link rel="apple-touch-icon" sizes="180x180" href="https://miicontest.wii.rc24.xyz/apple-touch-icon.png">\n<link rel="icon" type="image/png" sizes="32x32" href="https://miicontest.wii.rc24.xyz/favicon-32x32.png">\n<link rel="icon" type="image/png" sizes="16x16" href="https://miicontest.wii.rc24.xyz/favicon-16x16.png">\n<link rel="manifest" href="https://miicontest.wii.rc24.xyz/site.webmanifest">\n<link rel="mask-icon" href="https://miicontest.wii.rc24.xyz/safari-pinned-tab.svg" color="#89c0ca">\n<meta name="msapplication-TileColor" content="#2d89ef">\n<meta name="theme-color" content="#c57725">\n<!-- General Meta tags for SEO -->\n<meta name="language" content="en">\n<meta name="title" content="Contest Rankings" />\n<meta name="author" content="RiiConnect24" />\n<meta name="copyright" content="&copy; RiiConnect24" />\n<meta name="robots" content="index, follow" />\n<meta name="subject" content="Mii">\n<meta name="keywords" content="Nintendo, Wii, Homebrew, WiiConnect24, Mii, Contest">\n<meta name="description" content="You can view and download Miis posted to our Check Mii Out Channel revival here. It\'s like Super Mario Maker Bookmark, but about Miis.">\n<meta name="classification" content="You can view and download Miis posted to our Check Mii Out Channel revival here. It\'s like Super Mario Maker Bookmark, but about Miis.">\n<!-- Open Graph Tags -->\n<meta property="og:type" content="website" />\n<meta property="og:title" content="Contest Rankings" />\n<meta property="og:image" content="https://miicontest.wii.rc24.xyz/images/banner.png" />\n<meta property="og:locale" content="en" />\n<meta property="og:site_name" content="Check Mii Out Channel" />\n<meta property="og:description" content="You can view and download Miis posted to our Check Mii Out Channel revival here. It\'s like Super Mario Maker Bookmark, but about Miis.">\n<!-- Twitter -->\n<meta name="twitter:card" content="summary_large_image">\n<meta name="twitter:site" content="@RiiConnect24">\n<meta name="twitter:creator" content="@RiiConnect24">\n\n<meta name="viewport" content="width=device-width, initial-scale=1.0"/></head>\n\n<body class="center">\n<h2><img src="https://miicontest.wii.rc24.xyz/images/rankings.png" id="icon"> Contest Rankings</h2>\n<h5>{contestName}</h5>'
-table = (
-    f'<p>Click on a Mii to download it.</p>\n<table class="striped" align="center">\n'
-    + headers
-)
+headers = "\t<tr>\n" + "".join(headers) + "\t</tr>\n"
+table = f'<p>Click on a Mii to download it.</p>\n<table class="striped" align="center">\n{headers}'
 
-rank = 0
-
-for i in range(len(row)):
-    rank += 1
+for rank, i in enumerate(range(len(row)), start=1):
     likes = row[i][1]
     entryno = row[i][2]
-    mii_filename = "/var/www/rc24/wapp.wii.com/miicontest/public_html/render/contest-{}.mii".format(
-        entryno
-    )
+    mii_filename = f"/var/www/rc24/wapp.wii.com/miicontest/public_html/render/contest-{entryno}.mii"
     if not exists(mii_filename):
         with open(mii_filename, "wb") as f:
             miidata = decodeMii(row[i][0])[:-2]

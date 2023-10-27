@@ -33,14 +33,10 @@ def checkWiino(wiino):
     wiino = str(wiino).zfill(16)
     if len(wiino) > 16:
         return False
-    else:
-        checkResult = check_output(
-            "wiino check {}".format(wiino), shell=True, universal_newlines=True
-        )
-        if int(checkResult) == 0:
-            return True
-        else:
-            return False
+    checkResult = check_output(
+        f"wiino check {wiino}", shell=True, universal_newlines=True
+    )
+    return int(checkResult) == 0
 
 
 def verifyMac(mac):  # verify macaddress is valid and from a Wii
@@ -105,10 +101,7 @@ def verifyMac(mac):  # verify macaddress is valid and from a Wii
         "E84ECE",
         "ECC40D",
     ]
-    if len(mac) == 12 and mac.upper()[:6] in oui:
-        return True
-    else:
-        return False
+    return len(mac) == 12 and mac.upper()[:6] in oui
 
 
 def encodeMii(data):  # takes binary mii data, returns compressed and b64 encoded data
@@ -209,18 +202,6 @@ else:  # this user is updating their entry
         "SELECT ip FROM conmiis WHERE mac = %s AND contest = %s", (macadr, contestno)
     )
     storedIP = cursor.fetchone()
-    if storedIP != None:
-        if storedIP[0] == "None":  # allows admins to reset a mii's IP
-            pass
-
-        elif storedIP[0] != ip:
-            pass
-            # result(610) #current IP address is different from the one the mii was initially uploaded with
-
-    else:
-        pass
-        # result(610)
-
     cursor.execute(
         "UPDATE conmiis SET miidata = %s, ip = %s WHERE craftsno = %s AND mac = %s AND contest = %s",
         (miidata, ip, craftsno, macadr, contestno),

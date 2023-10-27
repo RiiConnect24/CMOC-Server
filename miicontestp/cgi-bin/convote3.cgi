@@ -75,10 +75,7 @@ def verifyMac(mac):  # verify macaddress is valid and from a Wii
         "E84ECE",
         "ECC40D",
     ]
-    if len(mac) == 12 and mac.upper()[:6] in oui:
-        return True
-    else:
-        return False
+    return len(mac) == 12 and mac.upper()[:6] in oui
 
 
 def return403():
